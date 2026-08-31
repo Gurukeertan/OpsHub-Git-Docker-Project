@@ -1,0 +1,37 @@
+services:
+  opshub:
+    build: .
+    container_name: opshub
+    ports:
+      - "8080:80"
+    networks:
+      - opshub-net
+
+  opshub-worker:
+    build: ./worker
+    container_name: opshub-worker
+    ports:
+      - "7071:7070"
+    networks:
+      - opshub-net
+
+  opshub-monitor:
+    build: ./monitor
+    container_name: opshub-monitor
+    ports:
+      - "9090:9090"
+    environment:
+      # Comma-separated name=url pairs. Add any new container here to
+      # start monitoring it -- no code changes needed, just its name
+      # (matching its Docker service name, resolved via opshub-net's
+      # internal DNS) and its health-check URL.
+      - MONITOR_TARGETS=opshub=http://opshub/health,opshub-worker=http://opshub-worker:7070/health
+    depends_on:
+      - opshub
+      - opshub-worker
+    networks:
+      - opshub-net
+
+networks:
+  opshub-net:
+    driver: bridge
